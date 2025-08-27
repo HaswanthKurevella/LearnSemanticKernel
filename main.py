@@ -1,25 +1,47 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import google.generativeai as genai
+import semantic_kernel as sk
+from semantic_kernel.connectors.ai.google.google_ai import GoogleAIChatCompletion
 from dotenv import load_dotenv
 import os
 
-# Load environment variables
+# Load API key from .env
 load_dotenv()
 
-    #Fastapi is initialized
-app=FastAPI()
-#     #kernel is initialized
-# kernel=sk.Kernel()
-    #GEMINI ai should be configured with kernel (api key auth)
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-gemini_model = genai.GenerativeModel("gemini-2.0-flash")
+# Initialize Semantic Kernel
+kernel = sk.Kernel()
+
+# Add Gemini service via official connector
+gemini_service = GoogleAIChatCompletion(
+    gemini_model_id="gemini-2.0-flash",
+    api_key=os.getenv("GEMINI_API_KEY"),
+    service_id="gemini-service"
+)
+
+kernel.add_service(gemini_service)
+
+# Create a semantic function (prompt template)
+summarize_function = kernel.create_semantic_function(
+    prompt="Summarize the following text in simple words:\n{{$input}}",
+    skill_name="SummarySkill",
+    function_name="Summarize"
+)
+
+# FastAPI setup
+app = FastAPI()
 
 class Item(BaseModel):
-    text:str
+    text: str
+
 @app.post("/process/")
-def send_data(item:Item):
-    input_text=item.text
-    gemini_response = gemini_model.generate_content(input_text)
-    bard_output = gemini_response.text
-    return {"response": bard_output}
+async def process_text(item: Item):
+    result = await kernel.run_async(
+        input=item.text,
+        skill_name="SummarySkill",
+        function_name="Summarize"
+    )
+    # result.value holds the generated text
+    return {
+        "original": item.text,
+        "gemini_summary": result.value
+    }
