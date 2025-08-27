@@ -13,9 +13,9 @@ my_fastapi_app/
 │── .env
 │── requirements.txt
 │── README.md
-│── screenshots/
-    │── input.png
-    │── output.png
+│── Screenshots/
+    │── Input.png
+    │── Output.png
 ```
 
 ---
