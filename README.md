@@ -87,11 +87,11 @@ You’ll get a response like:
 
 ### Input Example
 
-![Input Example](screenshots/Input.png)
+![Input Example](Screenshots/Input.png)
 
 ### Output Example
 
-![Output Example](screenshots/Output.png)
+![Output Example](Screenshots/Output.png)
 
 ---
 
