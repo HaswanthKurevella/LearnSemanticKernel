@@ -1,15 +1,27 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import google.generativeai as genai
 import os
+import semantic_kernel as sk
+from semantic_kernel.connectors.ai.google.google_ai import GoogleAIChatCompletion
+
 
 # Load environment variables
 load_dotenv()
 
-# Configure Gemini API
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-gemini_model = genai.GenerativeModel("gemini-2.0-flash")
+# Get Gemini API key
+GEMINI_KEY = os.getenv("GEMINI_API_KEY")
+
+# Initialize Semantic Kernel
+kernel = sk.Kernel()
+
+kernel.add_service(
+    GoogleAIChatCompletion(
+        service_id="gemini",
+        api_key=GEMINI_KEY,
+        gemini_model_id="gemini-2.0-flash"
+    )
+)
 
 # FastAPI app
 app = FastAPI()
@@ -19,11 +31,11 @@ class Item(BaseModel):
     text: str
 
 @app.post("/process/")
-def process_text(item: Item):
-    # Directly send user text to Gemini
-    response = gemini_model.generate_content(item.text)
-    
+async def process_text(item: Item):
+    # Use Semantic Kernel to call Gemini
+    response = await kernel.invoke_prompt(item.text, service_id="gemini")
+
     return {
         "original": item.text,
-        "gemini_output": response.text
+        "gemini_output": str(response)
     }
